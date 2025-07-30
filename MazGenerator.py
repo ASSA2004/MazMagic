@@ -1,24 +1,36 @@
 import random
 
 def generate_maze(rows, cols):
+    # Ensure dimensions are odd
+    if rows % 2 == 0:
+        rows += 1
+    if cols % 2 == 0:
+        cols += 1
+
+    # Initialize maze: 1 for walls, 0 for paths
     maze = [[1 for _ in range(cols)] for _ in range(rows)]
 
-    def carve(x, y):
-        dirs = [(0, 2), (0, -2), (2, 0), (-2, 0)]
-        random.shuffle(dirs)
-        for dx, dy in dirs:
-            nx, ny = x + dx, y + dy
-            if 1 <= nx < rows-1 and 1 <= ny < cols-1:
-                if maze[nx][ny] == 1:
-                    maze[nx - dx//2][ny - dy//2] = 0  # Break wall between
-                    maze[nx][ny] = 0
-                    carve(nx, ny)
+    # Directions: (dy, dx)
+    directions = [(-2, 0), (2, 0), (0, -2), (0, 2)]
 
-    # Start at (1,1)
-    maze[1][1] = 0
-    carve(1, 1)
+    def is_valid(nr, nc):
+        return 0 <= nr < rows and 0 <= nc < cols
 
-    # Entry and Exit
-    maze[1][0] = 0  # Entry
-    maze[rows-2][cols-1] = 0  # Exit
+    def carve_passages_from(r, c):
+        maze[r][c] = 0
+        random.shuffle(directions)
+
+        for dy, dx in directions:
+            nr, nc = r + dy, c + dx
+            if is_valid(nr, nc) and maze[nr][nc] == 1:
+                wall_y, wall_x = r + dy // 2, c + dx // 2
+                maze[wall_y][wall_x] = 0
+                maze[nr][nc] = 0
+                carve_passages_from(nr, nc)
+
+    # Start from cell (1,1)
+    carve_passages_from(1, 1)
+
+    # Make sure exit is clear
+    maze[rows - 2][cols - 2] = 0
     return maze
